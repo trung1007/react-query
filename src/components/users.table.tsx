@@ -22,6 +22,8 @@ function UsersTable() {
   const [dataUser, setDataUser] = useState({});
 
   const [isOpenDeleteModal, setIsOpenDeleteModal] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState(0)
 
   const handleEditUser = (user: any) => {
     setDataUser(user);
@@ -67,9 +69,15 @@ function UsersTable() {
     error,
     data: users,
   } = useQuery({
-    queryKey: ["fetchUsers"],
+    queryKey: ["fetchUsers", currentPage],
     queryFn: (): Promise<IUser[]> =>
-      fetch("http://localhost:8000/users").then((res) => res.json()),
+      fetch(`http://localhost:8000/users?_page=${currentPage}&_limit=1`).then((res) => {
+        const total_items = +(res?.headers?.get("X-Total-Count") ?? 0)
+        const page_size = 1;
+        const total_pages = total_items == 0 ? 0 : (total_items - 1) / page_size + 1;
+        setTotalPages(total_pages)
+        return res.json()
+      }),
   });
 
   if (isPending) return "Loading...";
@@ -133,7 +141,7 @@ function UsersTable() {
           })}
         </tbody>
       </Table>
-      <UsersPagination totalPages={0} />
+      <UsersPagination totalPages={totalPages} currentPage={currentPage} setCurrentPage={setCurrentPage} />
       <UserCreateModal
         isOpenCreateModal={isOpenCreateModal}
         setIsOpenCreateModal={setIsOpenCreateModal}
