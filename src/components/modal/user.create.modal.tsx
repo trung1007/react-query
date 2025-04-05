@@ -3,12 +3,39 @@ import Modal from 'react-bootstrap/Modal';
 import FloatingLabel from 'react-bootstrap/FloatingLabel';
 import Form from 'react-bootstrap/Form';
 import { useState } from 'react';
+import { useMutation, useQueryClient} from '@tanstack/react-query';
+import { IUser } from '../../constants/type';
+import { toast } from 'react-toastify';
+import { Spinner } from 'react-bootstrap';
+
 
 const UserCreateModal = (props: any) => {
     const { isOpenCreateModal, setIsOpenCreateModal } = props;
 
     const [email, setEmail] = useState<string>("");
     const [name, setName] = useState<string>("");
+    
+    const clientQuery = useQueryClient()
+
+    const mutation = useMutation({
+        mutationFn: async (payload: IUser) => {
+            await fetch("http://localhost:8000/users", {
+                method: "POST",
+                body: JSON.stringify({
+                    email: payload.email,
+                    name: payload.name
+                }),
+                headers: {
+                    "Content-Type": " application/json"
+                }
+            });
+        },
+        onSuccess: (data) => {
+            toast.success("Create success")
+            handleClose()
+            clientQuery.invalidateQueries({queryKey:['fetchUsers']})
+        },
+    })
 
     const handleSubmit = () => {
         if (!email) {
@@ -20,7 +47,16 @@ const UserCreateModal = (props: any) => {
             return;
         }
         //call api => call redux
-        console.log({ email, name }) //payload
+        mutation.mutate({
+            email: email,
+            name: name
+        })
+    }
+
+    const handleClose = () => {
+        setIsOpenCreateModal(false)
+        setEmail("")
+        setName("")
     }
 
     return (
@@ -57,10 +93,20 @@ const UserCreateModal = (props: any) => {
                     </FloatingLabel>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button
-                        variant='warning'
-                        onClick={() => setIsOpenCreateModal(false)} className='mr-2'>Cancel</Button>
-                    <Button onClick={() => handleSubmit()}>Save</Button>
+
+                    {!mutation.isPending ? (<>
+                        <Button
+                            variant='warning'
+                            onClick={() => setIsOpenCreateModal(false)} className='mr-2'>Cancel</Button>
+                        <Button onClick={() => handleSubmit()}>
+                            Save
+                        </Button></>
+                    ) : (<Button disabled>
+                        <Spinner animation='border' size='sm' role='status' as='span' aria-hidden='true' /> <></> Loading...
+                    </Button>)}
+
+
+
                 </Modal.Footer>
             </Modal>
         </>
