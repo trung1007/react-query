@@ -102,7 +102,7 @@ const UserCreateModal = (props: any) => {
                             Save
                         </Button></>
                     ) : (<Button disabled>
-                        <Spinner animation='border' size='sm' role='status' as='span' aria-hidden='true' /> <></> Loading...
+                        <Spinner animation='border' size='sm' role='status' as='span' aria-hidden='true' /> <></> Saving...
                     </Button>)}
 
 
